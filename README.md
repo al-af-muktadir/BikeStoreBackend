@@ -28,10 +28,10 @@ Bike Store SetUp PREREquisits:
 
 
 Test API endpoints
-Create Bike: api/products
-Get all Bikes: api/products/searchTerm=<term>
-get SPecefic bike: api/products/:productId
-update bike:api/products/:productId
-delete bike:api/products/:productId
-orderbike:api/orders
-getREvenue:api/orders/revenue
+1.Create Bike: api/products
+2.Get all Bikes: api/products/searchTerm=(term)
+3.get SPecefic bike: api/products/:productId
+4.update bike:api/products/:productId
+5.delete bike:api/products/:productId
+6.orderbike:api/orders
+7.getREvenue:api/orders/revenue
