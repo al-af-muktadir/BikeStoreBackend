@@ -1,82 +1,153 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { StatusCodes } from 'http-status-codes';
+import { AppError } from '../../../Error/AppError';
 import BikeModel from '../Bikes/bike.model';
 import { Orders } from './order.interface';
 import OrderModel from './order.model';
 import { ObjectId } from 'mongodb';
+import { userModel } from '../User/user.model';
+import { orderUtils } from './order.utils';
 
-const CreateOrderInDb = async (orders: Orders) => {
-  const result3 = await BikeModel.findOne({
-    _id: new ObjectId(orders.product),
-  });
-  try {
-    if (!result3) {
-      return {
-        success: false,
-        message: 'Product not found in inventory',
-      };
-    }
-    if (result3?.quantity < orders.quantity) {
-      return {
-        success: false,
-        message: 'Product is out of stock or insufficient quantity available',
-      };
-    }
-  } catch (err) {
-    return {
-      success: false,
-      message: err,
-    };
+const CreateOrderInDb = async (orders: Orders, client_ip: string) => {
+  const { products, User } = orders;
+  // //console.log('pds', products);
+
+  if (!products || products.length === 0) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'No Order Yet');
+    // //console.log('sdada');
   }
 
-  const result = await OrderModel.create(orders);
-
-  const result2 = await BikeModel.updateOne(
-    { _id: new ObjectId(orders.product) },
-    { $inc: { quantity: -orders.quantity } },
+  let totalPrice = 0;
+  //console.log('tt', totalPrice);
+  const productDetails = await Promise.all(
+    products.map(async (item) => {
+      const product = await BikeModel.findById(item.product);
+      if (product) {
+        const subtotal = product ? (product.price || 0) * item.quantity : 0;
+        totalPrice += subtotal;
+        return item;
+      }
+    }),
   );
+  const specUser = await userModel.findById(User);
+  //console.log('hoisenaki');
+  const order = await OrderModel.create({
+    User,
+    products: productDetails,
+    totalPrice,
+  });
 
-  try {
-    if (result3?.quantity === 0) {
-      await BikeModel.updateOne(
-        { _id: new ObjectId(orders.product) },
-        { inStock: false },
-      );
-      return {
-        error: 'Insufficient stock available',
-        success: true,
-        message: 'Insuffucient',
-        data: orders,
-      };
-    }
-  } catch (err) {
-    console.log(err, 'errorhappening');
+  //console.log(order);
+
+  const shurjopayPayload = {
+    amount: totalPrice,
+    order_id: order._id,
+    currency: 'BDT',
+    customer_name: specUser!.name,
+    customer_email: specUser!.email,
+    customer_address: 'N/A',
+    customer_phone: 'N/A',
+
+    customer_city: 'N/A',
+    client_ip,
+  };
+  // //console.log(shurjopayPayload);
+  // //console.log('payment er age ');
+  const payment = await orderUtils.makePaymentAsync(shurjopayPayload);
+  //console.log('payment', payment);
+
+  if (payment?.transactionStatus) {
+    await OrderModel.findByIdAndUpdate(
+      order._id,
+      {
+        transaction: {
+          id: payment.sp_order_id,
+          transactionStatus: payment.transactionStatus,
+        },
+      },
+      { new: true },
+    );
   }
 
-  return {
-    success: true,
-    message: 'Order Placed succesfully',
-    data: { result, orders, result2 },
-  };
+  for (const item of products) {
+    const { product, quantity } = item;
+    // //console.log(product, 'pdscss');
+
+    const bike = await BikeModel.findById(product);
+    // //console.log(bike);
+    if (!bike) {
+      throw new AppError(StatusCodes.NOT_FOUND, 'Not Found');
+    }
+
+    // Check if requested quantity is available
+    if (quantity > bike.quantity) {
+      throw new AppError(StatusCodes.NOT_FOUND, 'inSufficient stock');
+      // //console.log('notstocl');
+    }
+
+    // Reduce bike stock and set inStock to false if stock reaches 0
+    bike.quantity -= quantity;
+    if (bike.quantity === 0) {
+      bike.inStock = false;
+    }
+
+    await bike.save();
+  }
+  return payment.checkout_url;
+};
+
+const getOrder = async () => {
+  const result = await OrderModel.find();
+  return result;
+};
+const verifyPayment = async (order_id: string) => {
+  const verifiedPayment = await orderUtils.verifyPaymentAsync(order_id);
+
+  if (verifiedPayment.length) {
+    await OrderModel.findOneAndUpdate(
+      {
+        'transaction.id': order_id,
+      },
+      {
+        'transaction.bank_status': verifiedPayment[0].bank_status,
+        'transaction.sp_code': verifiedPayment[0].sp_code,
+        'transaction.sp_message': verifiedPayment[0].sp_message,
+        'transaction.transaction_status': verifiedPayment[0].transaction_status,
+
+        'transaction.method': verifiedPayment[0].method,
+      },
+    );
+  }
+  return verifiedPayment;
 };
 
 const OrderRevenue = async () => {
-  const result = await OrderModel.aggregate([
-    {
-      $project: {
-        revenue: { $multiply: ['$quantity', '$totalPrice'] }, // Multiply quantity and price for each document
-      },
-    },
-    {
-      $group: {
-        _id: null, // No grouping key, aggregate for all documents
-        totalRevenue: { $sum: '$revenue' }, // Sum up all revenue fields
-      },
-    },
+  //console.log('kirevaaiwtf');
+  const totalRevenue = await OrderModel.aggregate([
+    { $group: { _id: null, totalRevenue: { $sum: '$totalPrice' } } },
   ]);
-  const totalRevenue = result.length > 0 ? result[0].totalRevenue : 0;
+  //console.log('galimmarumkintu');
+  //console.log(totalRevenue);
   return totalRevenue;
 };
 
+const getEmailOrderFromDb = async (email: string) => {
+  const user = await userModel.findOne({ email: email });
+
+  const result = await OrderModel.find({ User: new ObjectId(user?._id) });
+
+  return result;
+};
+const updateOrderStatus = async (id: string, status: any) => {
+  const result = await OrderModel.findByIdAndUpdate(id, status);
+  //console.log('result', result);
+  return result;
+};
 export const OrderServices = {
   CreateOrderInDb,
   OrderRevenue,
+  getEmailOrderFromDb,
+  verifyPayment,
+  getOrder,
+  updateOrderStatus,
 };

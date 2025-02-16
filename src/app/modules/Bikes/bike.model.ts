@@ -16,10 +16,11 @@ const BikeSchema = new Schema<Bike>(
     },
     description: { type: String, required: true },
     quantity: { type: Number, required: true },
-    inStock: { type: Boolean, required: true },
+    inStock: { type: Boolean, required: true, default: true },
+    image: { type: String, require: true },
   },
   { timestamps: true },
 );
 
-const BikeModel = model<Bike>('Bike-Collection', BikeSchema);
+const BikeModel = model<Bike>('bike-collection', BikeSchema);
 export default BikeModel;

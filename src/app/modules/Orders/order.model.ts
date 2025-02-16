@@ -1,22 +1,47 @@
 import { Schema, model } from 'mongoose';
 import { Orders } from './order.interface';
-import validator from 'validator';
 
 const OrderSchema = new Schema<Orders>(
   {
-    email: {
-      type: String,
+    User: {
+      type: Schema.Types.ObjectId,
+      ref: 'user-collection',
       required: true,
-      validate: {
-        validator: (value: string) => validator.isEmail(value),
-        message: 'Email is empty',
-      },
     },
-    product: { type: String, required: true },
-    quantity: { type: Number, required: true },
-    totalPrice: { type: Number, required: true },
+    products: [
+      {
+        product: {
+          type: Schema.Types.ObjectId,
+          ref: 'bike-collection',
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
+    totalPrice: {
+      type: Number,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ['Pending', 'Delivered'],
+      default: 'Pending',
+    },
+    transaction: {
+      id: String,
+      transactionStatus: String,
+      bank_status: String,
+      sp_code: String,
+      sp_message: String,
+      method: String,
+    },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+  },
 );
 
 const OrderModel = model<Orders>('order-collection', OrderSchema);
