@@ -12,6 +12,7 @@ router.post(
   BikeController.createBike,
 );
 router.get('/products', BikeController.getAllBikes);
+router.get('/product/:productNamae', BikeController.getBikesByName);
 router.get('/products/:productId', BikeController.getBikeById);
 router.patch('/products/:productId', auth('admin'), BikeController.updateBike);
 router.delete('/products/:productId', auth('admin'), BikeController.DeleteBike);

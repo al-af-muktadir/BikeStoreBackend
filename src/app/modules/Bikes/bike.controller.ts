@@ -58,10 +58,20 @@ const DeleteBike = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getBikesByName = catchAsync(async (req: Request, res: Response) => {
+  const result = await BikeServices.getBikesByName(req.params.productNamae);
+  sendRespose(res, {
+    statusCode: StatusCodes.OK,
+    message: 'Bike retrieved successfully',
+    data: result,
+  });
+});
+
 export const BikeController = {
   createBike,
   getAllBikes,
   getBikeById,
   updateBike,
   DeleteBike,
+  getBikesByName,
 };

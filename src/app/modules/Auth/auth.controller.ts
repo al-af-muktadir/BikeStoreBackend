@@ -83,6 +83,15 @@ const GetUserByemail = catchAsync(async (req, res) => {
   });
 });
 
+const GetUserAll = catchAsync(async (req, res) => {
+  const result = await authService.getAllUserFromDb();
+  console.log(result);
+  sendRespose(res, {
+    statusCode: StatusCodes.OK,
+    message: 'All User Retireved Succesfully',
+    data: result,
+  });
+});
 export const authController = {
   createUser,
   loginUser,
@@ -90,4 +99,5 @@ export const authController = {
   updatePassword,
   GetUserByemail,
   logOut,
+  GetUserAll,
 };

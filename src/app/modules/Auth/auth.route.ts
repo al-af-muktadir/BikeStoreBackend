@@ -42,4 +42,5 @@ route.get(
 
   authController.GetUserByemail,
 );
+route.get('/auth/all', authController.GetUserAll);
 export const AuthRouter = { route };

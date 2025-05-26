@@ -17,6 +17,8 @@ const getAllBikesFromDB = async (query: Record<string, unknown>) => {
     'inStock',
     'minPrice',
     'maxPrice',
+    'page',
+    'limit',
   ];
 
   excluded.forEach((el) => delete copy[el]);
@@ -27,6 +29,10 @@ const getAllBikesFromDB = async (query: Record<string, unknown>) => {
   const inStock = query.inStock as string | undefined;
   const minPrice = query.minPrice ? Number(query.minPrice) : undefined;
   const maxPrice = query.maxPrice ? Number(query.maxPrice) : undefined;
+
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 6;
+  const skip = (page - 1) * limit;
 
   const queryObject: {
     $or?: { [key: string]: { $regex: string; $options: string } }[];
@@ -42,16 +48,9 @@ const getAllBikesFromDB = async (query: Record<string, unknown>) => {
     }));
   }
 
-  if (category) {
-    queryObject.category = category;
-  }
-  if (brand) {
-    queryObject.brand = brand;
-  }
-
-  if (inStock) {
-    queryObject.inStock = inStock === 'available' ? true : false;
-  }
+  if (category) queryObject.category = category;
+  if (brand) queryObject.brand = brand;
+  if (inStock) queryObject.inStock = inStock === 'available';
 
   if (minPrice !== undefined || maxPrice !== undefined) {
     queryObject.price = {};
@@ -60,11 +59,23 @@ const getAllBikesFromDB = async (query: Record<string, unknown>) => {
   }
 
   try {
-    // If no filters are provided, return all bikes
-    const result = await BikeModel.find(
-      Object.keys(queryObject).length ? queryObject : {},
-    );
-    return result;
+    const filter = Object.keys(queryObject).length ? queryObject : {};
+
+    const [bikes, total] = await Promise.all([
+      BikeModel.find(filter).skip(skip).limit(limit),
+      BikeModel.countDocuments(filter),
+    ]);
+
+    return {
+      success: true,
+      data: bikes,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   } catch (err) {
     return {
       success: false,
@@ -88,10 +99,18 @@ const DeleteBikeFromDB = async (id: string) => {
 
   return result;
 };
+
+const getBikesByName = async (name: string) => {
+  const result = await BikeModel.find({
+    name: name,
+  });
+  return result;
+};
 export const BikeServices = {
   postBikeIntoDB,
   getAllBikesFromDB,
   BikeById,
   updateBikeInDB,
   DeleteBikeFromDB,
+  getBikesByName,
 };

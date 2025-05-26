@@ -120,10 +120,17 @@ const getUserFromDb = async (email: string) => {
   const result = await userModel.findOne({ email: email });
   return result;
 };
+
+const getAllUserFromDb = async () => {
+  const result = await userModel.find();
+  console.log(result, 'result');
+  return result;
+};
 export const authService = {
   createUserIntoDb,
   logInUserFromDb,
   sendrefreshToken,
   updatePassfromDb,
   getUserFromDb,
+  getAllUserFromDb,
 };

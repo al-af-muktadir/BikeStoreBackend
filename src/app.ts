@@ -7,6 +7,7 @@ import orderRoute from './app/modules/Orders/order.route';
 import { AuthRouter } from './app/modules/Auth/auth.route';
 import { globalErrorHandler } from './Error/globalErrorHandler';
 import { UserRouter } from './app/modules/User/user.route';
+import { newsRouter } from './app/modules/News/news.route';
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
@@ -25,6 +26,7 @@ app.use('/api', bikeRoute);
 app.use('/api', AuthRouter.route);
 app.use('/api', UserRouter);
 app.use('/api', orderRoute);
+app.use('/api', newsRouter);
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello World!');
 });
