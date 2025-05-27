@@ -12,7 +12,7 @@ export type TError = {
 }[];
 
 export const handleZodError = (err: ZodError): TErrorREturnType => {
-  const error: TError = err.issues.map((issue: ZodIssue) => ({
+  const error: TError = err.issues?.map((issue: ZodIssue) => ({
     path: issue.path[issue.path.length - 1],
     message: issue.message,
   }));

@@ -36,10 +36,13 @@ const createUserIntoDb = async (user: Tuser) => {
 
 const logInUserFromDb = async (user: TLoginUser) => {
   const userData = await userModel.findOne({ email: user.email });
+  console.log(userData, 'userData');
   const isPasswordMatched = await bcrypt.compare(
     user.password,
     userData?.password as string,
   );
+
+  console.log(isPasswordMatched, 'isPasswordMatched');
   if (!isPasswordMatched) {
     throw new AppError(StatusCodes.UNAUTHORIZED, 'You are not Authorized');
   } else if (!userData) {
@@ -65,6 +68,7 @@ const logInUserFromDb = async (user: TLoginUser) => {
       config.refresh_token_secret as string,
       { expiresIn: '200d' },
     );
+    console.log(token, 'token');
     return { token, refreshToken };
   }
 };

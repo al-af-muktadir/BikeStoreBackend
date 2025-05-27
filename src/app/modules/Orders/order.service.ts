@@ -20,7 +20,7 @@ const CreateOrderInDb = async (orders: Orders, client_ip: string) => {
   let totalPrice = 0;
   //console.log('tt', totalPrice);
   const productDetails = await Promise.all(
-    products.map(async (item) => {
+    products?.map(async (item) => {
       const product = await BikeModel.findById(item.product);
       if (product) {
         const subtotal = product ? (product.price || 0) * item.quantity : 0;

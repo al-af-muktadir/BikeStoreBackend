@@ -43,7 +43,7 @@ const getAllBikesFromDB = async (query: Record<string, unknown>) => {
   } = {};
 
   if (search) {
-    queryObject.$or = searchFields.map((field) => ({
+    queryObject.$or = searchFields?.map((field) => ({
       [field]: { $regex: search, $options: 'i' },
     }));
   }
