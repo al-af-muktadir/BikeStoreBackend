@@ -37,7 +37,9 @@ const createUserIntoDb = (user) => __awaiter(void 0, void 0, void 0, function* (
 });
 const logInUserFromDb = (user) => __awaiter(void 0, void 0, void 0, function* () {
     const userData = yield user_model_1.userModel.findOne({ email: user.email });
+    console.log(userData, 'userData');
     const isPasswordMatched = yield bcrypt_1.default.compare(user.password, userData === null || userData === void 0 ? void 0 : userData.password);
+    console.log(isPasswordMatched, 'isPasswordMatched');
     if (!isPasswordMatched) {
         throw new AppError_1.AppError(http_status_codes_1.StatusCodes.UNAUTHORIZED, 'You are not Authorized');
     }
@@ -58,6 +60,7 @@ const logInUserFromDb = (user) => __awaiter(void 0, void 0, void 0, function* ()
             role: userData.role,
             name: userData.name,
         }, config_1.default.refresh_token_secret, { expiresIn: '200d' });
+        console.log(token, 'token');
         return { token, refreshToken };
     }
 });

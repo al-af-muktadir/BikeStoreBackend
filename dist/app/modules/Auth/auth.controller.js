@@ -36,6 +36,7 @@ const createUser = (0, CatchAsync_1.default)((req, res) => __awaiter(void 0, voi
     });
 }));
 const loginUser = (0, CatchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(req.body, 'req.body');
     const result = yield auth_service_1.authService.logInUserFromDb(req.body);
     const { refreshToken } = result;
     res.cookie('refreshToken', refreshToken, {

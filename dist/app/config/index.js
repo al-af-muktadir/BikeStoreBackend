@@ -11,9 +11,9 @@ exports.default = {
     node_env: process.env.NODE_ENV,
     database_url: process.env.DATABASE_URL,
     saltrounds: process.env.SALT_ROUNDS,
-    access_token_secret: process.env.ACCESS_TOKEN_SECRET,
-    access_token_expiresin: process.env.ACCESS_TOKEN_EXPIRESIN,
-    refresh_token_secret: process.env.REFRESH_TOKEN_SECRET,
+    access_token_secret: process.env.JWT_SECRET,
+    access_token_expiresin: process.env.JWT_EXPIRATION,
+    refresh_token_secret: process.env.JWT_REFRESH_SECRET,
     sp: {
         sp_endpoint: process.env.SP_ENDPOINT,
         sp_username: process.env.SP_USERNAME,
